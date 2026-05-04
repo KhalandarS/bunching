@@ -50,6 +50,7 @@ const BusTrackingApp = () => {
   const busMarkersRef = useRef({});
   const routePolylinesRef = useRef({});  // Store route polylines
   const logEndRef = useRef(null);
+  const busDetailRefsRef = useRef({});  // Store refs to bus detail blocks for auto-scroll
 
   // =========================================================================
   // WEBSOCKET CONNECTION
@@ -265,6 +266,9 @@ const BusTrackingApp = () => {
           fillOpacity: 0.8,
         })
           .bindPopup(`<b>${bus.name}</b><br/>Speed: ${bus.speed.toFixed(1)} km/h<br/>Status: ${bus.status}`)
+          .on('click', () => {
+            setSelectedBus(bus.id);
+          })
           .addTo(mapRef.current);
 
         busMarkersRef.current[markerId] = marker;
@@ -301,6 +305,16 @@ const BusTrackingApp = () => {
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [eventLog]);
+
+  // Auto-scroll to selected bus detail block
+  useEffect(() => {
+    if (selectedBus && busDetailRefsRef.current[selectedBus]) {
+      busDetailRefsRef.current[selectedBus].scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+    }
+  }, [selectedBus]);
 
   useEffect(() => {
     connectWebSocket();
@@ -362,6 +376,9 @@ const BusTrackingApp = () => {
               {buses.map((bus) => (
                 <div
                   key={bus.id}
+                  ref={(el) => {
+                    if (el) busDetailRefsRef.current[bus.id] = el;
+                  }}
                   onClick={() => setSelectedBus(selectedBus === bus.id ? null : bus.id)}
                   className={`p-3 rounded-lg cursor-pointer transition border-2 ${
                     selectedBus === bus.id
